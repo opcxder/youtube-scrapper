@@ -1,0 +1,7 @@
+{
+    "searchQueries": ["trending videos", "popular music"],
+    "maxVideos": 5,
+    "maxComments": 5,
+    "sortBy": "popular",
+    "useProxy": false
+} 

@@ -1,26 +1,17 @@
-export const isHomePage = (url) => {
-    return url.hostname === 'www.youtube.com' && url.pathname === '/';
-};
+export function isSearchPage(url) {
+    return url.pathname === '/results' && url.searchParams.has('search_query');
+}
 
-export const isChannelPage = (url) => {
-    return url.hostname === 'www.youtube.com' && (
-        url.pathname.startsWith('/c/') ||
-        url.pathname.startsWith('/channel/') ||
-        url.pathname.startsWith('/user/')
-    );
-};
+export function isChannelPage(url) {
+    return url.pathname.startsWith('/@') || 
+           url.pathname.startsWith('/c/') || 
+           url.pathname.startsWith('/channel/');
+}
 
-export const isVideoPage = (url) => {
-    return url.hostname === 'www.youtube.com' && (
-        url.pathname === '/watch' ||
-        url.searchParams.has('v')
-    );
-};
+export function isVideoPage(url) {
+    return url.pathname === '/watch' && url.searchParams.has('v');
+}
 
-export const isUserProfilePage = (url) => {
-    return url.hostname === 'www.youtube.com' && (
-        url.pathname.includes('/feed/subscriptions') ||
-        url.pathname.includes('/feed/library') ||
-        url.pathname.includes('/feed/history')
-    );
-}; 
+export function isUserProfilePage(url) {
+    return url.pathname === '/profile';
+} 

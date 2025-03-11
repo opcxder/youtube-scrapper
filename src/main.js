@@ -1,20 +1,21 @@
 import { Actor } from 'apify';
 import { PlaywrightCrawler, RequestList } from 'crawlee';
 import { URL } from 'url';
+import fs from 'fs';
 
 // Utility functions
 import {
-    isHomePage,
     isChannelPage,
     isVideoPage,
     isUserProfilePage,
+    isSearchPage,
 } from './utils/urlParser.js';
 
 import {
-    scrapeHomePage,
     scrapeChannelPage,
     scrapeVideoPage,
     scrapeUserProfilePage,
+    scrapeSearchPage,
 } from './scrapers/index.js';
 
 // Register exit handler for cleanup
@@ -31,15 +32,48 @@ Actor.main(async () => {
     console.log('YouTube scraper starting...');
     
     try {
-        const input = await Actor.getInput() || {};
+        // Read input from file
+        let input = {};
+        try {
+            const inputFile = process.env.APIFY_INPUT_FILE || 'input.json';
+            const inputData = fs.readFileSync(inputFile, 'utf8');
+            input = JSON.parse(inputData);
+            console.log('Successfully read input from file:', inputFile);
+        } catch (e) {
+            console.log('No input file found, using defaults');
+        }
         
         const {
-            startUrls = [{ url: 'https://www.youtube.com/' }],
-            maxVideos = 50,
-            maxComments = 100,
+            startUrls = [],
+            searchQueries = ['trending videos'],
+            maxVideos = 5,
+            maxComments = 5,
             sortBy = 'popular',
-            useProxy = true,
+            useProxy = false,
         } = input;
+
+        // If no startUrls provided, create them from search queries
+        const urls = startUrls.length > 0 ? startUrls : 
+            searchQueries.map(query => ({
+                url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`
+            }));
+
+        console.log('Input configuration:', {
+            maxVideos,
+            maxComments,
+            sortBy,
+            useProxy,
+            urls: urls.map(u => u.url),
+            searchQueries
+        });
+
+        // Validate input
+        if (maxVideos < 1 || maxVideos > 1000) {
+            throw new Error('maxVideos must be between 1 and 1000');
+        }
+        if (maxComments < 0 || maxComments > 500) {
+            throw new Error('maxComments must be between 0 and 500');
+        }
 
         // Save input to key-value store for debugging
         await Actor.setValue('INPUT', input);
@@ -49,12 +83,12 @@ Actor.main(async () => {
             : undefined;
 
         // Initialize RequestList
-        const requestList = await RequestList.open('youtube-list', startUrls);
+        const requestList = await RequestList.open('youtube-list', urls);
 
         const crawler = new PlaywrightCrawler({
             requestList,
             proxyConfiguration,
-            maxConcurrency: 1, // Reduced for stability
+            maxConcurrency: 1,
             launchContext: {
                 launchOptions: {
                     headless: true,
@@ -62,13 +96,16 @@ Actor.main(async () => {
                         '--disable-dev-shm-usage',
                         '--disable-gpu',
                         '--no-sandbox',
-                        '--disable-setuid-sandbox'
+                        '--disable-setuid-sandbox',
+                        '--disable-web-security',
+                        '--disable-features=IsolateOrigins,site-per-process',
+                        '--window-size=1280,800'
                     ],
-                    channel: 'chromium', // Explicitly set chromium channel
+                    channel: 'chromium',
                 },
             },
             browserPoolOptions: {
-                useFingerprints: false, // Disable fingerprinting
+                useFingerprints: false,
                 preLaunchHooks: [
                     async (browserController) => {
                         const { context } = browserController;
@@ -89,16 +126,23 @@ Actor.main(async () => {
                 let data;
 
                 try {
-                    if (isHomePage(url)) {
-                        data = await scrapeHomePage(page, maxVideos);
+                    // Wait for network to be idle
+                    await page.waitForLoadState('networkidle');
+
+                    if (isSearchPage(url)) {
+                        data = await scrapeSearchPage(page, maxVideos);
+                        log.info(`Found ${data.videos.length} videos in search results`);
                     } else if (isChannelPage(url)) {
                         data = await scrapeChannelPage(page, maxVideos);
+                        log.info(`Found ${data.latest_videos.length} videos on channel`);
                     } else if (isVideoPage(url)) {
                         data = await scrapeVideoPage(page, maxComments);
+                        log.info(`Found ${data.top_comments?.length || 0} comments on video`);
                     } else if (isUserProfilePage(url)) {
                         data = await scrapeUserProfilePage(page);
+                        log.info(`Found ${data.subscribed_channels.length} subscribed channels`);
                     } else {
-                        log.warning('Unknown page type:', request.url);
+                        log.warning('Unknown page type:', url.toString());
                         return;
                     }
 
