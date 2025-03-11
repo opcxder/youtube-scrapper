@@ -1,0 +1,27 @@
+{
+    "name": "youtube-scraper",
+    "version": "1.0.0",
+    "description": "Apify actor for scraping YouTube data including trending videos, channels, video metadata, and user profiles",
+    "main": "src/main.js",
+    "type": "module",
+    "dependencies": {
+        "apify": "^3.1.8",
+        "playwright": "^1.41.0",
+        "crawlee": "^3.0.0",
+        "got-scraping": "^3.2.15",
+        "moment": "^2.29.4"
+    },
+    "scripts": {
+        "start": "node src/main.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "apify",
+        "youtube",
+        "scraper",
+        "crawler",
+        "actor"
+    ],
+    "author": "",
+    "license": "ISC"
+} 
