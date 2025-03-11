@@ -8,12 +8,7 @@
             "type": "array",
             "description": "List of search queries to scrape videos from",
             "editor": "stringList",
-            "default": ["trending videos"],
-            "items": {
-                "type": "string",
-                "title": "Search Query",
-                "description": "YouTube search query"
-            }
+            "default": ["trending videos"]
         },
         "startUrls": {
             "title": "Start URLs",
@@ -21,20 +16,9 @@
             "description": "List of YouTube URLs to scrape. Can include search results, video pages, channel pages, or user profile pages.",
             "editor": "requestListSources",
             "default": [],
-            "items": {
-                "title": "URL",
-                "type": "object",
-                "editor": "requestListSources",
-                "description": "YouTube URL to scrape",
-                "properties": {
-                    "url": {
-                        "title": "URL",
-                        "type": "string",
-                        "description": "URL to scrape",
-                        "editor": "textfield"
-                    }
-                }
-            }
+            "prefill": [
+                { "url": "https://www.youtube.com/results?search_query=trending" }
+            ]
         },
         "maxVideos": {
             "title": "Maximum Videos",
@@ -57,7 +41,6 @@
             "type": "string",
             "description": "How to sort the results",
             "enum": ["popular", "recent"],
-            "enumTitles": ["Most Popular", "Most Recent"],
             "default": "popular"
         },
         "useProxy": {
