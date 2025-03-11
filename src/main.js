@@ -32,15 +32,22 @@ Actor.main(async () => {
     console.log('YouTube scraper starting...');
     
     try {
-        // Read input from file
-        let input = {};
-        try {
-            const inputFile = process.env.APIFY_INPUT_FILE || 'input.json';
-            const inputData = fs.readFileSync(inputFile, 'utf8');
-            input = JSON.parse(inputData);
-            console.log('Successfully read input from file:', inputFile);
-        } catch (e) {
-            console.log('No input file found, using defaults');
+        // Try to get input from Apify first, then fall back to file
+        let input = await Actor.getInput();
+        
+        // If no Apify input, try reading from file
+        if (!input) {
+            try {
+                const inputFile = process.env.APIFY_INPUT_FILE || 'input.json';
+                const inputData = fs.readFileSync(inputFile, 'utf8');
+                input = JSON.parse(inputData);
+                console.log('Using input from file:', inputFile);
+            } catch (e) {
+                console.log('No input file found, using defaults');
+                input = {};
+            }
+        } else {
+            console.log('Using input from Apify console');
         }
         
         const {

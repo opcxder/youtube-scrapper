@@ -1,47 +1,71 @@
 {
-    "title": "YouTube Scraper",
-    "description": "Scrape data from YouTube including trending videos, channels, video metadata, and user profiles",
+    "title": "YouTube Scraper Input",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
+        "searchQueries": {
+            "title": "Search Queries",
+            "type": "array",
+            "description": "List of search queries to scrape videos from",
+            "editor": "stringList",
+            "default": ["trending videos"],
+            "items": {
+                "type": "string",
+                "title": "Search Query",
+                "description": "YouTube search query"
+            }
+        },
         "startUrls": {
             "title": "Start URLs",
             "type": "array",
-            "description": "URLs to start with. Can be YouTube homepage, channel, video, or user profile URLs",
+            "description": "List of YouTube URLs to scrape. Can include search results, video pages, channel pages, or user profile pages.",
             "editor": "requestListSources",
-            "prefill": [
-                { "url": "https://www.youtube.com/" }
-            ]
+            "default": [],
+            "items": {
+                "title": "URL",
+                "type": "object",
+                "editor": "requestListSources",
+                "description": "YouTube URL to scrape",
+                "properties": {
+                    "url": {
+                        "title": "URL",
+                        "type": "string",
+                        "description": "URL to scrape",
+                        "editor": "textfield"
+                    }
+                }
+            }
         },
         "maxVideos": {
-            "title": "Maximum videos to scrape",
+            "title": "Maximum Videos",
             "type": "integer",
-            "description": "Maximum number of videos to scrape per page/channel",
-            "default": 50,
+            "description": "Maximum number of videos to scrape from each page",
             "minimum": 1,
-            "maximum": 1000
+            "maximum": 1000,
+            "default": 5
         },
         "maxComments": {
-            "title": "Maximum comments per video",
+            "title": "Maximum Comments",
             "type": "integer",
-            "description": "Maximum number of comments to scrape per video",
-            "default": 100,
+            "description": "Maximum number of comments to scrape from each video",
             "minimum": 0,
-            "maximum": 500
+            "maximum": 500,
+            "default": 5
         },
         "sortBy": {
-            "title": "Sort order",
+            "title": "Sort By",
             "type": "string",
-            "description": "Sort order for videos and comments",
-            "enum": ["popular", "recent", "mostViewed"],
+            "description": "How to sort the results",
+            "enum": ["popular", "recent"],
+            "enumTitles": ["Most Popular", "Most Recent"],
             "default": "popular"
         },
         "useProxy": {
-            "title": "Use proxy",
+            "title": "Use Proxy",
             "type": "boolean",
-            "description": "Whether to use Apify Proxy",
-            "default": true
+            "description": "Whether to use Apify Proxy for scraping",
+            "default": false
         }
     },
-    "required": ["startUrls"]
+    "required": []
 } 
