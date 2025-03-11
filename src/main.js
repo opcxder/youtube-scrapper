@@ -1,5 +1,5 @@
 import { Actor } from 'apify';
-import { PlaywrightCrawler } from 'crawlee';
+import { PlaywrightCrawler, RequestList } from 'crawlee';
 import { URL } from 'url';
 
 // Utility functions
@@ -33,7 +33,7 @@ Actor.main(async () => {
     try {
         const input = await Actor.getInput();
         const {
-            startUrls,
+            startUrls = [{ url: 'https://www.youtube.com/' }],
             maxVideos = 50,
             maxComments = 100,
             sortBy = 'popular',
@@ -47,7 +47,11 @@ Actor.main(async () => {
             ? await Actor.createProxyConfiguration()
             : undefined;
 
+        // Initialize RequestList
+        const requestList = await RequestList.open('youtube-list', startUrls);
+
         const crawler = new PlaywrightCrawler({
+            requestList,
             proxyConfiguration,
             maxConcurrency: 5,
             launchContext: {
@@ -111,12 +115,9 @@ Actor.main(async () => {
                 });
             },
         });
-
-        // Create request list
-        const requestList = await Actor.openRequestList('start-urls', startUrls);
         
         // Run the crawler
-        await crawler.run(requestList);
+        await crawler.run();
         
         // Set successful exit status
         return 'Scraping finished successfully!';
