@@ -31,7 +31,8 @@ Actor.main(async () => {
     console.log('YouTube scraper starting...');
     
     try {
-        const input = await Actor.getInput();
+        const input = await Actor.getInput() || {};
+        
         const {
             startUrls = [{ url: 'https://www.youtube.com/' }],
             maxVideos = 50,
@@ -53,13 +54,34 @@ Actor.main(async () => {
         const crawler = new PlaywrightCrawler({
             requestList,
             proxyConfiguration,
-            maxConcurrency: 5,
+            maxConcurrency: 1, // Reduced for stability
             launchContext: {
                 launchOptions: {
                     headless: true,
+                    args: [
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu',
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox'
+                    ],
+                    channel: 'chromium', // Explicitly set chromium channel
                 },
             },
+            browserPoolOptions: {
+                useFingerprints: false, // Disable fingerprinting
+                preLaunchHooks: [
+                    async (browserController) => {
+                        const { context } = browserController;
+                        if (context) {
+                            await context.clearCookies();
+                        }
+                    },
+                ],
+            },
             async requestHandler({ page, request, log }) {
+                // Set default timeout to 30 seconds
+                page.setDefaultTimeout(30000);
+                
                 log.info(`Processing ${request.url}...`);
                 
                 // Detect page type
